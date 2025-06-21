@@ -57,14 +57,13 @@
 
     {% for patient in patients %}
         <div class="record">
-            <h2>{{ patient.name }} (Age {{ patient.age }})</h2>
-            <p><strong>Diagnosis:</strong> {{ patient.readable_disease }}</p>
-            <p><strong>Recommended Cream:</strong> {{ patient.readable_cream }}</p>
-            <p><strong>Usage Instructions:</strong> {{ patient.usage }}</p>
+            <h2>{{ patient['name'] }} (Age {{ patient['age'] }})</h2>
+            <p><strong>Diagnosis:</strong> {{ patient['readable_disease'] }}</p>
+            <p><strong>Recommended Cream:</strong> {{ patient['readable_cream'] }}</p>
+            <p><strong>Usage Instructions:</strong> {{ patient['usage'] }}</p>
         </div>
     {% endfor %}
 
     <a class="back-link" href="/">Add Another Record</a>
 </body>
 </html>
-
