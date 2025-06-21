@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect
 import numpy as np
+import pandas as pd  # ✅ Added for DataFrame input to model
 import pickle
 
 app = Flask(__name__)
@@ -67,10 +68,8 @@ skindisease_prediction_with_creams = {
     3: ("Lichen Planus", "Hydrocortisone", "Apply 2-3 times daily"),
     4: ("Pityriasis Rosea", "Tacrolimus", "Apply once daily"),
     5: ("Chronic Dermatitis", "Mometasone", "Apply once daily at night"),
-    # ...
 }
 
-# ✅ Add readable disease descriptions
 disease_fullnames = {
     "Psoriasis": "Psoriasis – a chronic autoimmune skin condition",
     "Lichen Planus": "Lichen Planus – itchy, purple-colored rashes",
@@ -78,7 +77,6 @@ disease_fullnames = {
     "Seborrheic Dermatitis": "Seborrheic Dermatitis – oily, flaky patches on scalp/face"
 }
 
-# ✅ Add readable cream descriptions
 cream_details = {
     "Betamethasone": "Betamethasone – a strong corticosteroid to reduce inflammation",
     "Hydrocortisone": "Hydrocortisone – mild steroid for rashes and itching",
@@ -94,18 +92,18 @@ def index():
 def add_patient():
     name = request.form['name']
     age = int(request.form['age'])
-    symptoms_raw = request.form.getlist('symptoms')
-
-    # Ensure all symptoms are collected from form
+    
     input_vector = []
     for feat in feature_names[:-1]:  # exclude age
         val = int(request.form.get(f"symptoms[{feat}]", 0))
         input_vector.append(val)
     input_vector.append(age)
 
-    pred = model.predict([input_vector])[0]
-    disease, cream, usage = skindisease_prediction_with_creams.get(pred, ("Unknown", "Consult Dermatologist", "N/A"))
+    # ✅ Clean input with DataFrame (fixes ML warning)
+    input_df = pd.DataFrame([input_vector], columns=feature_names)
+    pred = model.predict(input_df)[0]
 
+    disease, cream, usage = skindisease_prediction_with_creams.get(pred, ("Unknown", "Consult Dermatologist", "N/A"))
     readable_disease = disease_fullnames.get(disease, disease)
     readable_cream = cream_details.get(cream, cream)
 
