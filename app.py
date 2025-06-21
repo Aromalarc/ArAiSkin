@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect
 from pymongo import MongoClient
 from dotenv import load_dotenv
 import numpy as np
+import pandas as pd  # ✅ Added for safe prediction
 import pickle
 import os
 
@@ -105,9 +106,11 @@ def add_patient():
         input_vector.append(val)
     input_vector.append(age)
 
-    pred = model.predict([input_vector])[0]
-    disease, cream, usage = skindisease_prediction_with_creams.get(pred, ("Unknown", "Consult Dermatologist", "N/A"))
+    # ✅ Use DataFrame to match training format
+    input_df = pd.DataFrame([input_vector], columns=feature_names)
+    pred = model.predict(input_df)[0]
 
+    disease, cream, usage = skindisease_prediction_with_creams.get(pred, ("Unknown", "Consult Dermatologist", "N/A"))
     readable_disease = disease_fullnames.get(disease, disease)
     readable_cream = cream_details.get(cream, cream)
 
@@ -121,9 +124,7 @@ def add_patient():
         'usage': usage
     }
 
-    # Save to MongoDB
     patients_collection.insert_one(patient_data)
-
     return redirect('/records')
 
 @app.route('/records')
