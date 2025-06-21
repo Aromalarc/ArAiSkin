@@ -1,6 +1,7 @@
-Flask==2.3.3
-gunicorn==21.2.0
-numpy
-gunicorn
-pandas
-scikit-learn
+Flask==2.3.2
+numpy==1.24.4
+pandas==1.5.3
+scikit-learn==1.3.2
+pymongo==4.6.1
+dnspython==2.4.2
+python-dotenv==1.0.1
