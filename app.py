@@ -14,7 +14,7 @@ app = Flask(__name__)
 # PostgreSQL DB connection (edit with your credentials)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
     'DATABASE_URL',
-    'postgresql://postgres:your_password@localhost:5432/skin_diagnosis'
+    'postgresql://postgres:Aromal@0292@localhost:2000/Skincare'
 )
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
