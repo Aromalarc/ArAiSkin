@@ -9,3 +9,5 @@ setuptools>=42
 wheel
 build
 gunicorn
+pymongo[srv]
+cryptography
