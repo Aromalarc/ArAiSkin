@@ -11,7 +11,7 @@ app = Flask(__name__)
 
 # Load environment variables
 load_dotenv()
-client = pymongo.MongoClient("mongodb://localhost:27017/")
+client = pymongo.MongoClient("mongodb+srv://aromalsbabu507:Aromal0292@skincare.fw5axg4.mongodb.net/?retryWrites=true&w=majority&appName=Skincare")
 db = client["skin_diagnosis"]
 patients_collection = db["patients"]
 
