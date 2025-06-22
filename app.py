@@ -14,16 +14,16 @@ app = Flask(__name__)
 # PostgreSQL DB connection (edit with your credentials)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
     'DATABASE_URL',
-    'postgresql://postgres:Aromal@0292@localhost:2000/Skincare'
+    'postgresql://postgres:Aromal%400292@localhost:2000/Skincare'  # Encoded '@' as %40
 )
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# Load model
+# Load ML model
 with open("skin_disease_rf_model.pkl", "rb") as f:
     model = pickle.load(f)
 
-# DB model
+# Database model
 class Patient(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
@@ -34,17 +34,34 @@ class Patient(db.Model):
     readable_cream = db.Column(db.Text)
     usage = db.Column(db.String(200))
 
-# Create tables
-@app.before_first_request
+# Create DB tables before first request
+@app.before_serving
 def create_tables():
     db.create_all()
 
-# Feature and label definitions
-feature_names = [...]
-symptom_labels = {...}
-skindisease_prediction_with_creams = {...}
-disease_fullnames = {...}
-cream_details = {...}
+# --- Replace these with actual values ---
+feature_names = ['itching', 'skin_rash', 'nodal_skin_eruptions', 'age']  # Example
+symptom_labels = {
+    'itching': 'Itching',
+    'skin_rash': 'Skin Rash',
+    'nodal_skin_eruptions': 'Nodal Skin Eruptions'
+}
+skindisease_prediction_with_creams = {
+    0: ("psoriasis", "betamethasone", "Apply twice daily"),
+    1: ("acne", "clindamycin", "Apply once at night"),
+    2: ("eczema", "hydrocortisone", "Apply in thin layer twice daily")
+}
+disease_fullnames = {
+    "psoriasis": "Psoriasis",
+    "acne": "Acne Vulgaris",
+    "eczema": "Atopic Dermatitis"
+}
+cream_details = {
+    "betamethasone": "Betamethasone Dipropionate 0.05%",
+    "clindamycin": "Clindamycin Phosphate Gel 1%",
+    "hydrocortisone": "Hydrocortisone Cream 1%"
+}
+# ----------------------------------------
 
 @app.route('/')
 def index():
@@ -87,4 +104,6 @@ def show_records():
     return render_template('records.html', patients=patients)
 
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
     app.run(debug=True)
