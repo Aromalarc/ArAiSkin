@@ -2,7 +2,7 @@ Flask
 numpy
 pandas
 scikit-learn
-pymongo[srv]
+pymongo
 dnspython
 python-dotenv
 setuptools>=42
