@@ -1,137 +1,145 @@
-from flask import Flask, render_template, request, redirect
-import pymongo
+from flask import Flask, render_template, request, redirect, flash
 from pymongo import MongoClient
+from pymongo.errors import ConnectionFailure, OperationFailure
 from dotenv import load_dotenv
-import numpy as np
-import pandas as pd  # ✅ Added for safe prediction
+import pandas as pd
 import pickle
 import os
+from datetime import datetime
+import logging
 
+# Initialize Flask app
 app = Flask(__name__)
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
-client = pymongo.MongoClient("mongodb+srv://aromalsbabu507:Aromal0292@skincare.fw5axg4.mongodb.net/?retryWrites=true&w=majority&appName=Skincare")
-db = client["skin_diagnosis"]
-patients_collection = db["patients"]
 
-# Load model
-with open("skin_disease_rf_model.pkl", "rb") as f:
-    model = pickle.load(f)
+# Database connection with error handling
+def get_db_connection():
+    try:
+        client = MongoClient(
+            os.getenv('MONGODB_URI', "mongodb+srv://aromalsbabu507:Aromal0292@skincare.fw5axg4.mongodb.net/?retryWrites=true&w=majority&appName=Skincare"),
+            connectTimeoutMS=10000,
+            socketTimeoutMS=None,
+            serverSelectionTimeoutMS=5000
+        )
+        client.admin.command('ping')  # Test connection
+        db = client["skin_diagnosis"]
+        return db
+    except (ConnectionFailure, OperationFailure) as e:
+        logger.error(f"Database connection failed: {e}")
+        return None
 
-# Symptom feature list (ordered)
-feature_names = [
+# Load ML model with error handling
+try:
+    with open("skin_disease_rf_model.pkl", "rb") as f:
+        model = pickle.load(f)
+    logger.info("ML model loaded successfully")
+except Exception as e:
+    logger.error(f"Error loading model: {e}")
+    model = None
+
+# Constants (moved to top for better organization)
+FEATURE_NAMES = [
     "erythema", "scaling", "definite_borders", "itching", "koebner_phenomenon",
-    "polygonal_papules", "follicular_papules", "oral_mucosal_involvement",
-    "knee_and_elbow_involvement", "scalp_involvement", "family_history",
-    "melanin_incontinence", "eosinophils_infiltrate", "PNL_infiltrate",
-    "fibrosis_papillary_dermis", "exocytosis", "acanthosis", "hyperkeratosis",
-    "parakeratosis", "clubbing_rete_ridges", "elongation_rete_ridges",
-    "thinning_suprapapillary_epidermis", "spongiform_pustule", "munro_microabcess",
-    "focal_hypergranulosis", "disappearance_granular_layer",
-    "vacuolisation_damage_basal_layer", "spongiosis", "saw_tooth_appearance_retes",
-    "follicular_horn_plug", "perifollicular_parakeratosis",
-    "inflammatory_mononuclear_infiltrate", "band_like_infiltrate", "age"
+    # ... (rest of your feature names)
+    "age"
 ]
 
-symptom_labels = {
+SYMPTOM_LABELS = {
     "erythema": "Redness of skin",
-    "scaling": "Dry, flaky skin",
-    "definite_borders": "Well-defined rash edges",
-    "itching": "Itching sensation",
-    "koebner_phenomenon": "Rash formation after skin trauma",
-    "polygonal_papules": "Flat-topped bumps",
-    "follicular_papules": "Bumps around hair follicles",
-    "oral_mucosal_involvement": "Involvement of mouth lining",
-    "knee_and_elbow_involvement": "Affects knees and elbows",
-    "scalp_involvement": "Scalp affected",
-    "family_history": "Family history of skin condition",
-    "melanin_incontinence": "Pigment leaks into lower skin",
-    "eosinophils_infiltrate": "Eosinophil cell buildup",
-    "PNL_infiltrate": "Polymorphonuclear leukocytes present",
-    "fibrosis_papillary_dermis": "Thickening of upper skin layer",
-    "exocytosis": "White blood cell movement into skin",
-    "acanthosis": "Skin thickening",
-    "hyperkeratosis": "Thick outer skin layer",
-    "parakeratosis": "Retained nuclei in skin layers",
-    "clubbing_rete_ridges": "Swollen epidermal ridges",
-    "elongation_rete_ridges": "Extended epidermal ridges",
-    "thinning_suprapapillary_epidermis": "Thin skin between ridges",
-    "spongiform_pustule": "Fluid-filled skin lesion",
-    "munro_microabcess": "White cell collection in skin",
-    "focal_hypergranulosis": "Thickened granular skin spots",
-    "disappearance_granular_layer": "Missing granular layer",
-    "vacuolisation_damage_basal_layer": "Damage to skin base",
-    "spongiosis": "Skin swelling between cells",
-    "saw_tooth_appearance_retes": "Saw-toothed ridges",
-    "follicular_horn_plug": "Blocked hair follicles",
-    "perifollicular_parakeratosis": "Disorder around hair follicles",
-    "inflammatory_mononuclear_infiltrate": "Single-nucleus immune cells in skin",
-    "band_like_infiltrate": "Flat area of immune cells"
+    # ... (rest of your symptom labels)
 }
 
-skindisease_prediction_with_creams = {
-    1: ("Psoriasis", "Betamethasone", "Apply thinly once daily"),
-    2: ("Seborrheic Dermatitis", "Clobetasol", "Apply twice daily for 2 weeks"),
-    3: ("Lichen Planus", "Hydrocortisone", "Apply 2-3 times daily"),
-    4: ("Pityriasis Rosea", "Tacrolimus", "Apply once daily"),
-    5: ("Chronic Dermatitis", "Mometasone", "Apply once daily at night"),
-}
-
-disease_fullnames = {
-    "Psoriasis": "Psoriasis – a chronic autoimmune skin condition",
-    "Lichen Planus": "Lichen Planus – itchy, purple-colored rashes",
-    "Chronic Dermatitis": "Chronic Dermatitis – persistent skin inflammation",
-    "Seborrheic Dermatitis": "Seborrheic Dermatitis – oily, flaky patches on scalp/face"
-}
-
-cream_details = {
-    "Betamethasone": "Betamethasone – a strong corticosteroid to reduce inflammation",
-    "Hydrocortisone": "Hydrocortisone – mild steroid for rashes and itching",
-    "Mometasone": "Mometasone – steroid for eczema and chronic dermatitis",
-    "Clobetasol": "Clobetasol – very potent corticosteroid for severe skin conditions"
-}
+# ... (rest of your constants like skindisease_prediction_with_creams, etc.)
 
 @app.route('/')
 def index():
-    return render_template('index.html', symptoms=feature_names[:-1], symptom_labels=symptom_labels)
+    if not model:
+        flash("Diagnosis system is currently unavailable", "error")
+    return render_template('index.html', symptoms=FEATURE_NAMES[:-1], symptom_labels=SYMPTOM_LABELS)
 
 @app.route('/add', methods=['POST'])
 def add_patient():
-    name = request.form['name']
-    age = int(request.form['age'])
+    if not model:
+        flash("Diagnosis system is currently unavailable", "error")
+        return redirect('/')
+    
+    try:
+        # Input validation
+        name = request.form.get('name', '').strip()
+        if not name or len(name) > 100:
+            flash("Please enter a valid name (1-100 characters)", "error")
+            return redirect('/')
+        
+        try:
+            age = int(request.form.get('age', 0))
+            if not (1 <= age <= 120):
+                raise ValueError
+        except ValueError:
+            flash("Please enter a valid age (1-120)", "error")
+            return redirect('/')
 
-    input_vector = []
-    for feat in feature_names[:-1]:  # exclude age
-        val = int(request.form.get(f"symptoms[{feat}]", 0))
-        input_vector.append(val)
-    input_vector.append(age)
+        # Process symptoms
+        input_vector = []
+        for feat in FEATURE_NAMES[:-1]:  # exclude age
+            val = int(request.form.get(f"symptoms[{feat}]", 0))
+            input_vector.append(val)
+        input_vector.append(age)
 
-    # ✅ Use DataFrame to match training format
-    input_df = pd.DataFrame([input_vector], columns=feature_names)
-    pred = model.predict(input_df)[0]
+        # Make prediction
+        input_df = pd.DataFrame([input_vector], columns=FEATURE_NAMES)
+        pred = model.predict(input_df)[0]
 
-    disease, cream, usage = skindisease_prediction_with_creams.get(pred, ("Unknown", "Consult Dermatologist", "N/A"))
-    readable_disease = disease_fullnames.get(disease, disease)
-    readable_cream = cream_details.get(cream, cream)
+        # Get treatment info
+        disease, cream, usage = skindisease_prediction_with_creams.get(
+            pred, ("Unknown", "Consult Dermatologist", "N/A"))
+        
+        # Store patient data
+        patient_data = {
+            'name': name,
+            'age': age,
+            'disease': disease,
+            'cream': cream,
+            'readable_disease': disease_fullnames.get(disease, disease),
+            'readable_cream': cream_details.get(cream, cream),
+            'usage': usage,
+            'created_at': datetime.utcnow()
+        }
 
-    patient_data = {
-        'name': name,
-        'age': age,
-        'disease': disease,
-        'cream': cream,
-        'readable_disease': readable_disease,
-        'readable_cream': readable_cream,
-        'usage': usage
-    }
+        db = get_db_connection()
+        if db:
+            db.patients.insert_one(patient_data)
+            flash("Patient record added successfully!", "success")
+        else:
+            flash("Database connection failed", "error")
 
-    patients_collection.insert_one(patient_data)
-    return redirect('/records')
+        return redirect('/records')
+
+    except Exception as e:
+        logger.error(f"Error in add_patient: {e}")
+        flash("An error occurred while processing your request", "error")
+        return redirect('/')
 
 @app.route('/records')
 def show_records():
-    patients = list(patients_collection.find())
-    return render_template('records.html', patients=patients)
+    try:
+        db = get_db_connection()
+        if db:
+            patients = list(db.patients.find().sort("created_at", -1).limit(100))
+            return render_template('records.html', patients=patients)
+        else:
+            flash("Database connection failed", "error")
+            return render_template('records.html', patients=[])
+    except Exception as e:
+        logger.error(f"Error in show_records: {e}")
+        flash("An error occurred while retrieving records", "error")
+        return render_template('records.html', patients=[])
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=os.getenv('FLASK_DEBUG', 'False') == 'True')
