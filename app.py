@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 # Load environment variables
 load_dotenv()
-client = MongoClient(os.getenv("MONGO_URI"))
+client = pymongo.MongoClient("mongodb://localhost:27017/")
 db = client["skin_diagnosis"]
 patients_collection = db["patients"]
 
