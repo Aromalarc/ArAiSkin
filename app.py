@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect
+import pymongo
 from pymongo import MongoClient
 from dotenv import load_dotenv
 import numpy as np
