@@ -11,7 +11,7 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# PostgreSQL DB connection
+# Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
@@ -31,7 +31,7 @@ class Patient(db.Model):
     readable_cream = db.Column(db.Text)
     usage = db.Column(db.String(200))
 
-# Create DB tables before first request
+# Create DB tables before the first request
 @app.before_first_request
 def create_tables():
     db.create_all()
@@ -103,3 +103,4 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
     app.run(debug=True, host='0.0.0.0', port=5000)
+
