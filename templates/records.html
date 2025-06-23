@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html>
 <head>
     <title>Patient Records</title>
@@ -61,6 +61,97 @@
             <p><strong>Diagnosis:</strong> {{ patient['readable_disease'] }}</p>
             <p><strong>Recommended Cream:</strong> {{ patient['readable_cream'] }}</p>
             <p><strong>Usage Instructions:</strong> {{ patient['usage'] }}</p>
+        </div>
+    {% endfor %}
+
+    <a class="back-link" href="/">Add Another Record</a>
+</body>
+</html>
+ -->
+
+ <!DOCTYPE html>
+<html>
+<head>
+    <title>Patient Records</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f2f2f2;
+            padding: 40px;
+            margin: 0;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .logout-link {
+            text-decoration: none;
+            background-color: #e74c3c;
+            color: white;
+            padding: 8px 14px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            transition: background-color 0.2s ease;
+        }
+        .logout-link:hover {
+            background-color: #c0392b;
+        }
+        .record {
+            background-color: white;
+            margin-bottom: 20px;
+            padding: 20px;
+            border-left: 6px solid #4CAF50;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        h2 {
+            margin-top: 0;
+        }
+        .back-link {
+            margin-top: 30px;
+            display: inline-block;
+            background: #ddd;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 6px;
+            color: #333;
+        }
+        .delete-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .delete-btn:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Patient Records</h1>
+        <a href="/logout" class="logout-link">Logout</a>
+    </div>
+
+    {% for patient in patients %}
+        <div class="record">
+            <h2>{{ patient.name }} (Age {{ patient.age }})</h2>
+            <p><strong>Diagnosis:</strong> {{ patient.readable_disease }}</p>
+            <p><strong>Recommended Cream:</strong> {{ patient.readable_cream }}</p>
+            <p><strong>Usage Instructions:</strong> {{ patient.usage }}</p>
+
+            <form action="/delete/{{ patient.id }}" method="POST" style="margin-top:10px;">
+                <button class="delete-btn" type="submit" onclick="return confirm('Are you sure you want to delete this record?')">Delete</button>
+            </form>
         </div>
     {% endfor %}
 
