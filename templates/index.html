@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -140,6 +140,187 @@
 <body>
   <div class="container">
     <a href="/logout" class="logout-link">Logout</a>
+    <h1>Patient Record</h1>
+    <form method="POST" action="/add">
+      <label for="name">Patient Name</label>
+      <input type="text" id="name" name="name" required placeholder="e.g. John Doe" />
+
+      <label for="age">Age</label>
+      <input type="number" id="age" name="age" min="1" max="120" required placeholder="e.g. 30" />
+
+      <label>Symptom Severity (Swipe or Scroll)</label>
+      <div class="symptom-slider">
+        {% for feat in symptoms %}
+          <div class="symptom-group">
+            <label for="{{ feat }}">{{ symptom_labels[feat] }}</label>
+            <select id="{{ feat }}" name="symptoms[{{ feat }}]">
+              <option value="0">None</option>
+              <option value="1">Low</option>
+              <option value="2">Moderate</option>
+              <option value="3">High</option>
+            </select>
+          </div>
+        {% endfor %}
+      </div>
+
+      <button type="submit">Submit Record</button>
+    </form>
+
+    <div class="footer-link">
+      <a href="/records">View Patient Records</a>
+    </div>
+  </div>
+</body>
+</html>
+ -->
+
+ 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add Patient Record</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to right, #ece9e6, #ffffff);
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      background: white;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .logout-link {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      background: #e74c3c;
+      color: white;
+      padding: 8px 14px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: background-color 0.2s ease;
+    }
+
+    .logout-link:hover {
+      background: #c0392b;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 30px;
+      font-size: 2rem;
+    }
+
+    label {
+      font-weight: 600;
+      display: block;
+      margin: 15px 0 5px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+
+    .symptom-slider {
+      max-height: 300px;
+      overflow-y: auto;
+      padding-right: 10px;
+    }
+
+    .symptom-group {
+      margin-bottom: 15px;
+      transition: all 0.3s ease;
+    }
+
+    .symptom-group:hover {
+      transform: scale(1.01);
+    }
+
+    select {
+      background: #f9f9f9;
+    }
+
+    button {
+      background: #3498db;
+      color: white;
+      padding: 14px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 10px;
+      width: 100%;
+      margin-top: 20px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #2980b9;
+    }
+
+    .footer-link {
+      text-align: center;
+      margin-top: 25px;
+    }
+
+    .footer-link a {
+      text-decoration: none;
+      color: #555;
+      font-size: 0.95rem;
+    }
+
+    .footer-link a:hover {
+      text-decoration: underline;
+    }
+
+    .symptom-slider::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .symptom-slider::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+
+    .symptom-slider::-webkit-scrollbar-thumb {
+      background: #bbb;
+      border-radius: 5px;
+    }
+
+    .symptom-slider::-webkit-scrollbar-thumb:hover {
+      background: #999;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    
+    {% if 'user_id' in session %}
+      <a href="/logout" class="logout-link">Logout</a>
+    {% endif %}
+
     <h1>Patient Record</h1>
     <form method="POST" action="/add">
       <label for="name">Patient Name</label>
