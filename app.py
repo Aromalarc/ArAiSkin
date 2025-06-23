@@ -6,21 +6,16 @@ import pandas as pd
 import pickle
 import os
 
-# Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
-
-# Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# Load ML model
 with open("skin_disease_rf_model.pkl", "rb") as f:
     model = pickle.load(f)
 
-# Database model
 class Patient(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
@@ -31,32 +26,81 @@ class Patient(db.Model):
     readable_cream = db.Column(db.Text)
     usage = db.Column(db.String(200))
 
-# Create DB tables before the first request
-@app.before_first_request
-def create_tables():
+with app.app_context():
     db.create_all()
 
-# Example features — replace with your actual features
-feature_names = ['itching', 'skin_rash', 'nodal_skin_eruptions', 'age']
+feature_names = [
+    "erythema", "scaling", "definite_borders", "itching", "koebner_phenomenon",
+    "polygonal_papules", "follicular_papules", "oral_mucosal_involvement",
+    "knee_and_elbow_involvement", "scalp_involvement", "family_history",
+    "melanin_incontinence", "eosinophils_infiltrate", "PNL_infiltrate",
+    "fibrosis_papillary_dermis", "exocytosis", "acanthosis", "hyperkeratosis",
+    "parakeratosis", "clubbing_rete_ridges", "elongation_rete_ridges",
+    "thinning_suprapapillary_epidermis", "spongiform_pustule", "munro_microabcess",
+    "focal_hypergranulosis", "disappearance_granular_layer",
+    "vacuolisation_damage_basal_layer", "spongiosis", "saw_tooth_appearance_retes",
+    "follicular_horn_plug", "perifollicular_parakeratosis",
+    "inflammatory_mononuclear_infiltrate", "band_like_infiltrate", "age"
+]
+
 symptom_labels = {
-    'itching': 'Itching',
-    'skin_rash': 'Skin Rash',
-    'nodal_skin_eruptions': 'Nodal Skin Eruptions'
+    "erythema": "Redness of skin",
+    "scaling": "Dry, flaky skin",
+    "definite_borders": "Well-defined rash edges",
+    "itching": "Itching sensation",
+    "koebner_phenomenon": "Rash formation after skin trauma",
+    "polygonal_papules": "Flat-topped bumps",
+    "follicular_papules": "Bumps around hair follicles",
+    "oral_mucosal_involvement": "Involvement of mouth lining",
+    "knee_and_elbow_involvement": "Affects knees and elbows",
+    "scalp_involvement": "Scalp affected",
+    "family_history": "Family history of skin condition",
+    "melanin_incontinence": "Pigment leaks into lower skin",
+    "eosinophils_infiltrate": "Eosinophil cell buildup",
+    "PNL_infiltrate": "Polymorphonuclear leukocytes present",
+    "fibrosis_papillary_dermis": "Thickening of upper skin layer",
+    "exocytosis": "White blood cell movement into skin",
+    "acanthosis": "Skin thickening",
+    "hyperkeratosis": "Thick outer skin layer",
+    "parakeratosis": "Retained nuclei in skin layers",
+    "clubbing_rete_ridges": "Swollen epidermal ridges",
+    "elongation_rete_ridges": "Extended epidermal ridges",
+    "thinning_suprapapillary_epidermis": "Thin skin between ridges",
+    "spongiform_pustule": "Fluid-filled skin lesion",
+    "munro_microabcess": "White cell collection in skin",
+    "focal_hypergranulosis": "Thickened granular skin spots",
+    "disappearance_granular_layer": "Missing granular layer",
+    "vacuolisation_damage_basal_layer": "Damage to skin base",
+    "spongiosis": "Skin swelling between cells",
+    "saw_tooth_appearance_retes": "Saw-toothed ridges",
+    "follicular_horn_plug": "Blocked hair follicles",
+    "perifollicular_parakeratosis": "Disorder around hair follicles",
+    "inflammatory_mononuclear_infiltrate": "Single-nucleus immune cells in skin",
+    "band_like_infiltrate": "Flat area of immune cells"
 }
+
 skindisease_prediction_with_creams = {
-    0: ("psoriasis", "betamethasone", "Apply twice daily"),
-    1: ("acne", "clindamycin", "Apply once at night"),
-    2: ("eczema", "hydrocortisone", "Apply in thin layer twice daily")
+    1: ("Psoriasis", "Betamethasone", "Apply thinly once daily"),
+    2: ("Seborrheic Dermatitis", "Clobetasol", "Apply twice daily for 2 weeks"),
+    3: ("Lichen Planus", "Hydrocortisone", "Apply 2-3 times daily"),
+    4: ("Pityriasis Rosea", "Tacrolimus", "Apply once daily"),
+    5: ("Chronic Dermatitis", "Mometasone", "Apply once daily at night"),
 }
+
 disease_fullnames = {
-    "psoriasis": "Psoriasis",
-    "acne": "Acne Vulgaris",
-    "eczema": "Atopic Dermatitis"
+    "Psoriasis": "Psoriasis – a chronic autoimmune skin condition",
+    "Lichen Planus": "Lichen Planus – itchy, purple-colored rashes",
+    "Chronic Dermatitis": "Chronic Dermatitis – persistent skin inflammation",
+    "Seborrheic Dermatitis": "Seborrheic Dermatitis – oily, flaky patches on scalp/face",
+    "Pityriasis Rosea": "Pityriasis Rosea – a self-limiting skin rash often shaped like a Christmas tree"
 }
+
 cream_details = {
-    "betamethasone": "Betamethasone Dipropionate 0.05%",
-    "clindamycin": "Clindamycin Phosphate Gel 1%",
-    "hydrocortisone": "Hydrocortisone Cream 1%"
+    "Betamethasone": "Betamethasone – a strong corticosteroid to reduce inflammation",
+    "Hydrocortisone": "Hydrocortisone – mild steroid for rashes and itching",
+    "Mometasone": "Mometasone – steroid for eczema and chronic dermatitis",
+    "Clobetasol": "Clobetasol – very potent corticosteroid for severe skin conditions",
+    "Tacrolimus": "Tacrolimus – a non-steroidal anti-inflammatory cream for sensitive skin areas"
 }
 
 @app.route('/')
@@ -100,6 +144,4 @@ def show_records():
     return render_template('records.html', patients=patients)
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host="0.0.0.0", port=5000)
