@@ -11,11 +11,8 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# PostgreSQL DB connection (edit with your credentials)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
-    'DATABASE_URL',
-    'postgresql://postgres:Aromal%400292@localhost:2000/Skincare'  # Encoded '@' as %40
-)
+# PostgreSQL DB connection
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -35,12 +32,12 @@ class Patient(db.Model):
     usage = db.Column(db.String(200))
 
 # Create DB tables before first request
-@app.before_serving
+@app.before_first_request
 def create_tables():
     db.create_all()
 
-# --- Replace these with actual values ---
-feature_names = ['itching', 'skin_rash', 'nodal_skin_eruptions', 'age']  # Example
+# Example features — replace with your actual features
+feature_names = ['itching', 'skin_rash', 'nodal_skin_eruptions', 'age']
 symptom_labels = {
     'itching': 'Itching',
     'skin_rash': 'Skin Rash',
@@ -61,7 +58,6 @@ cream_details = {
     "clindamycin": "Clindamycin Phosphate Gel 1%",
     "hydrocortisone": "Hydrocortisone Cream 1%"
 }
-# ----------------------------------------
 
 @app.route('/')
 def index():
@@ -106,4 +102,4 @@ def show_records():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)
