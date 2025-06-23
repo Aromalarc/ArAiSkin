@@ -355,8 +355,7 @@
 # if __name__ == '__main__':
 #     app.run(debug=True, host="0.0.0.0", port=5000)
 
-#3
-
+#3  
 from flask import Flask, render_template, request, redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user, UserMixin
@@ -384,7 +383,7 @@ with open("skin_disease_rf_model.pkl", "rb") as f:
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), unique=True, nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
 
 class Patient(db.Model):
@@ -479,6 +478,7 @@ cream_details = {
     "Tacrolimus": "Tacrolimus – a non-steroidal anti-inflammatory cream for sensitive skin areas"
 }
 
+
 @app.route('/')
 @login_required
 def index():
@@ -489,15 +489,8 @@ def index():
 def add_patient():
     name = request.form['name']
     age = int(request.form['age'])
-
-    input_vector = []
-    total_symptom_score = 0
-
-    for feat in feature_names[:-1]:
-        val = int(request.form.get(f"symptoms[{feat}]", 0))
-        input_vector.append(val)
-        total_symptom_score += val
-
+    input_vector = [int(request.form.get(f"symptoms[{feat}]", 0)) for feat in feature_names[:-1]]
+    total_symptom_score = sum(input_vector)
     input_vector.append(age)
 
     if total_symptom_score == 0:
@@ -509,7 +502,6 @@ def add_patient():
     else:
         input_df = pd.DataFrame([input_vector], columns=feature_names)
         pred = model.predict(input_df)[0]
-
         disease, cream, usage = skindisease_prediction_with_creams.get(pred, ("Unknown", "Consult Dermatologist", "N/A"))
         readable_disease = disease_fullnames.get(disease, disease)
         readable_cream = cream_details.get(cream, cream)
@@ -557,7 +549,6 @@ def login():
         password = request.form['password']
 
         user = User.query.filter_by(email=email).first()
-
         if user and check_password_hash(user.password, password):
             login_user(user)
             return redirect('/')
