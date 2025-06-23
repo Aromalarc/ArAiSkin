@@ -361,6 +361,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user, UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
+from datetime import datetime
 import numpy as np
 import pandas as pd
 import pickle
@@ -396,6 +397,7 @@ class Patient(db.Model):
     readable_disease = db.Column(db.Text)
     readable_cream = db.Column(db.Text)
     usage = db.Column(db.String(200))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 with app.app_context():
     db.create_all()
