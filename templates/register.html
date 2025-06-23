@@ -208,27 +208,19 @@
         {% endif %}
 
         <form method="POST">
-            <div class="mb-3">
-                <label>Email</label>
-                <input type="email" name="email" class="form-control" required placeholder="Enter your email">
-            </div>
+    <div class="mb-3">
+        <label>Email</label>
+        <input type="email" name="email" class="form-control" required placeholder="Enter your email">
+    </div>
 
-            <div class="mb-3">
-                <label>Password</label>
-                <input type="password" name="password" class="form-control" required placeholder="Create a password">
-            </div>
+    <div class="mb-3">
+        <label>Password</label>
+        <input type="password" name="password" class="form-control" required placeholder="Create a password">
+    </div>
 
-            <div class="mb-3">
-                <label>Role</label>
-                <select name="role" class="form-select" required>
-                    <option value="">Select role</option>
-                    <option value="doctor">Doctor</option>
-                    <option value="patient">Patient</option>
-                </select>
-            </div>
+    <button type="submit" class="btn btn-success w-100">Register</button>
+</form>
 
-            <button type="submit" class="btn btn-success w-100">Register</button>
-        </form>
 
         <p class="text-center mt-3">
             Already have an account? <a href="/login">Login here</a>
