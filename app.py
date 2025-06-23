@@ -537,13 +537,13 @@ def show_records():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form['username']
+        email = request.form['email']
         password = generate_password_hash(request.form['password'])
 
-        if User.query.filter_by(username=username).first():
-            return "Username already exists!"
+        if User.query.filter_by(email=email).first():
+            return "Email already exists!"
 
-        new_user = User(username=username, password=password)
+        new_user = User(email=email, password=password)
         db.session.add(new_user)
         db.session.commit()
         return redirect('/login')
@@ -553,10 +553,10 @@ def register():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
 
-        user = User.query.filter_by(username=username).first()
+        user = User.query.filter_by(email=email).first()
 
         if user and check_password_hash(user.password, password):
             login_user(user)
