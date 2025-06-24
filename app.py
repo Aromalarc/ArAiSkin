@@ -479,6 +479,36 @@ cream_details = {
     "Clobetasol": "Clobetasol – very potent corticosteroid for severe skin conditions",
     "Tacrolimus": "Tacrolimus – a non-steroidal anti-inflammatory cream for sensitive skin areas"
 }
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+
+        user = User.query.filter_by(email=email).first()
+        if user and check_password_hash(user.password, password):
+            login_user(user)
+            return redirect('/')
+        else:
+            return "Invalid credentials!"
+
+    return render_template('login.html')
+    
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = generate_password_hash(request.form['password'])
+
+        if User.query.filter_by(email=email).first():
+            return "Email already exists!"
+
+        new_user = User(email=email, password=password)
+        db.session.add(new_user)
+        db.session.commit()
+        return redirect('/login')
+
+    return render_template('register.html')
 
 
 @app.route('/')
@@ -527,23 +557,7 @@ def add_patient():
 def show_records():
     patients = Patient.query.filter_by(user_id=current_user.id).all()
     return render_template('records.html', patients=patients)
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        email = request.form['email']
-        password = generate_password_hash(request.form['password'])
-
-        if User.query.filter_by(email=email).first():
-            return "Email already exists!"
-
-        new_user = User(email=email, password=password)
-        db.session.add(new_user)
-        db.session.commit()
-        return redirect('/login')
-
-    return render_template('register.html')
-    
+   
 @app.route('/delete/<int:patient_id>', methods=['POST'])
 @login_required
 def delete_patient(patient_id):
@@ -552,22 +566,6 @@ def delete_patient(patient_id):
         db.session.delete(patient)
         db.session.commit()
     return redirect('/records')
-
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
-
-        user = User.query.filter_by(email=email).first()
-        if user and check_password_hash(user.password, password):
-            login_user(user)
-            return redirect('/')
-        else:
-            return "Invalid credentials!"
-
-    return render_template('login.html')
 
 @app.route('/logout')
 @login_required
