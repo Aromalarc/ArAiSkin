@@ -544,7 +544,7 @@ def register():
 
     return render_template('register.html')
     
-    @app.route('/delete/<int:patient_id>', methods=['POST'])
+@app.route('/delete/<int:patient_id>', methods=['POST'])
 @login_required
 def delete_patient(patient_id):
     patient = Patient.query.filter_by(id=patient_id, user_id=current_user.id).first()
